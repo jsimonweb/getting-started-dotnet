@@ -367,7 +367,7 @@ function Delete-InstanceGroup {
   Write-Host "Deleting Google Cloud Platform resources created for testing."
   # Delete Global Forwarding Rule.
   Write-Host "Attempting to delete Global Forwarding Rule."
-  gcloud compute forwarding-rules delete $forwardingRule --quiet
+  gcloud compute forwarding-rules delete $forwardingRule --global --quiet
   # Delete Target HTTP Proxy.
   Write-Host "Attempting to delete Target HTTP Proxy."
   gcloud compute target-http-proxies delete $targetProxy --quiet
@@ -376,13 +376,15 @@ function Delete-InstanceGroup {
   gcloud compute url-maps delete $urlMap --quiet
   # Remove Instance Group as a backend to the Backend Service.
   Write-Host "Attempting to remove Instance Group as a Backend Service."
-  gcloud compute backend-services remove-backend $backendService --quiet
+  gcloud compute backend-services remove-backend $backendService `
+  --instance-group $instanceGroup --instance-group-zone $zone --quiet
   # Delete Backend Service.
   Write-Host "Attempting to delete Backend Service."
   gcloud compute backend-services delete $backendService --quiet
   # Delete Instance Group.
   Write-Host "Attempting to delete Instance Group."
-  gcloud compute instance-groups managed delete $instanceGroup --quiet
+  gcloud compute instance-groups managed delete $instanceGroup --zone $zone `
+  --quiet
   # Delete Health Check.
   Write-Host "Attempting to delete Health Check."
   gcloud compute http-health-checks delete $healthCheck --quiet
@@ -394,10 +396,10 @@ function Delete-InstanceGroup {
   gcloud compute images delete $instanceGroupVMimage --quiet
   # Delete Persistent Disk.
   Write-Host "Attempting to delete Persistent Disk."
-  gcloud compute disks delete $VMandDiskToCreateFromSnapshot --quiet
+  gcloud compute disks delete $VMandDiskToCreateFromSnapshot --zone $zone --quiet
   # Delete Snapshot.
   Write-Host "Attempting to delete Snapshot."
-  gcloud compute images delete $snapshot --quiet
+  gcloud compute snapshots delete $snapshot --quiet
   Write-Host "Deletion of Google Cloud Platform resources complete."
 }
 
