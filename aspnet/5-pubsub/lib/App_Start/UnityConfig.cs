@@ -35,6 +35,7 @@ namespace GoogleCloudSamples
     public enum BookStoreFlag
     {
         MySql,
+        SqlServer,
         Datastore
     }
 
@@ -70,6 +71,10 @@ namespace GoogleCloudSamples
                     DbConfiguration.SetConfiguration(new MySql.Data.Entity.MySqlEFConfiguration());
                     return BookStoreFlag.MySql;
 
+                case "sqlserver":
+                    //DbConfiguration.SetConfiguration(new MySql.Data.Entity.MySqlEFConfiguration());
+                    return BookStoreFlag.SqlServer;
+
                 default:
                     throw new ConfigurationException(
                          "Set the configuration variable GoogleCloudSamples:BookStore " +
@@ -90,6 +95,13 @@ namespace GoogleCloudSamples
                     break;
 
                 case BookStoreFlag.MySql:
+                    factory = new ApplicationDbContextFactory();
+                    container.RegisterType<ApplicationDbContext>(
+                        new InjectionFactory((x) => factory.Create()));
+                    container.RegisterType<IBookStore, DbBookStore>();
+                    break;
+
+                case BookStoreFlag.SqlServer:
                     factory = new ApplicationDbContextFactory();
                     container.RegisterType<ApplicationDbContext>(
                         new InjectionFactory((x) => factory.Create()));

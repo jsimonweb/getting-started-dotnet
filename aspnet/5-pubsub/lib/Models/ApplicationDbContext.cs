@@ -20,6 +20,10 @@ namespace GoogleCloudSamples.Models
     // [START dbset]
     public class ApplicationDbContext : DbContext
     {
+        // [START_EXCLUDE]
+        private static string mySqlServerBaseName = "LocalMySqlServer";
+        private static string sqlServerBaseName = "LocalSqlServer";
+        // [END_EXCLUDE]
         public DbSet<Book> Books { get; set; }
         // [END dbset]
 
@@ -35,8 +39,10 @@ namespace GoogleCloudSamples.Models
         /// <summary>
         /// Pulls connection string from Web.config.
         /// </summary>
-        internal ApplicationDbContext() : base("name=LocalMySqlServer")
-        {
+        internal ApplicationDbContext() : base("name=" + 
+            ((LibUnityConfig.ChooseBookStoreFromConfig() == BookStoreFlag.MySql) 
+            ? mySqlServerBaseName : sqlServerBaseName))
+        { 
         }
     }
 }

@@ -14,5 +14,12 @@
 Import-Module ..\..\..\BuildTools.psm1 -DisableNameChecking
 
 Set-BookStore mysql
+Remove-Item ..\lib\Migrations\* -Exclude Configuration.cs
+Copy-Item ..\lib\MigrationsCloudSql\* ..\lib\Migrations
 Build-Solution ..\5-pubsub.sln
+#Add-Migration Init -ProjectName "lib"
+#Update-Database -ProjectName "lib"
+Set-Location ..\lib
+Migrate-Database lib.dll bin\Debug ..\..\bookshelf\Web.config
+Set-Location ..\bookshelf
 Run-IISExpressTest 5-pubsub-bookshelf
