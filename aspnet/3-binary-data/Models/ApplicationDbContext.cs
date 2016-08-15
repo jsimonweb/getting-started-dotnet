@@ -31,7 +31,7 @@ namespace GoogleCloudSamples.Models
         /// Pulls connection string from Web.config.
         /// </summary>
         public ApplicationDbContext() : base("name=" +
-            ((LibUnityConfig.ChooseBookStoreFromConfig() == BookStoreFlag.MySql)
+            ((UnityConfig.ChooseBookStoreFromConfig() == BookStoreFlag.MySql)
             ? mySqlServerBaseName : sqlServerBaseName))
         {
         }
