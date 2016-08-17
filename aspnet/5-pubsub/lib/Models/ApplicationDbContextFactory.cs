@@ -29,18 +29,45 @@ namespace GoogleCloudSamples.Models
         /// <returns></returns>
         public ApplicationDbContext Create()
         {
-            string envConnectionString = Environment.GetEnvironmentVariable(
-                "Data:MySql:ConnectionString");
-            if (envConnectionString == null)
+            if (LibUnityConfig.ChooseBookStoreFromConfig() == BookStoreFlag.MySql)
             {
-                // Pulls connection string from Web.config.
-                return new ApplicationDbContext();
+                string envConnectionString = Environment.GetEnvironmentVariable(
+                    "GoogleCloudSamples:ConnectionStringCloudSql");
+                if (envConnectionString == null)
+                {
+                    // Pulls connection string from Web.config.
+                    return new ApplicationDbContext();
+                }
+                else
+                {
+                    // Pull the connection string from the environment variable.
+                    return new ApplicationDbContext(
+                        new MySql.Data.MySqlClient.MySqlConnection(envConnectionString));
+                }
+            }
+            else if (LibUnityConfig.ChooseBookStoreFromConfig() == BookStoreFlag.SqlServer)
+            {
+                string envConnectionString = Environment.GetEnvironmentVariable(
+                    "GoogleCloudSamples:ConnectionStringSqlServer");
+                if (envConnectionString == null)
+                {
+                    // Pulls connection string from Web.config.
+                    return new ApplicationDbContext();
+                }
+                else
+                {
+                    // Pull the connection string from the environment variable.
+                    return new ApplicationDbContext(
+                        new System.Data.SqlClient.SqlConnection(envConnectionString));
+                }
             }
             else
             {
-                // Pull the connection string from the environment variable.
-                return new ApplicationDbContext(
-                    new MySql.Data.MySqlClient.MySqlConnection(envConnectionString));
+                //
+                throw new ConfigurationException(
+                    "The configuration variable GoogleCloudSamples:BookStore " +
+                    "is set to mysql or sqlserver but a valid configuration " + 
+                    "variable for the database ConnectionString wasn't found.");
             }
         }
     }
