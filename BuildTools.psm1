@@ -161,13 +161,19 @@ filter Update-Config ([switch]$Yes) {
         Add-Setting $config 'GoogleCloudSamples:AuthClientSecret' $env:GoogleCloudSamples:AuthClientSecret
         $connectionString = Select-Xml -Xml $config.Node -XPath "connectionStrings/add[@name='LocalMySqlServer']"
         if ($connectionString) {
-            if ($env:GoogleCloudSamples:ConnectionString) {
-                $connectionString.Node.connectionString = $env:GoogleCloudSamples:ConnectionString;        
+            if ($env:GoogleCloudSamples:ConnectionStringCloudSql) {
+                $connectionString.Node.connectionString = $env:GoogleCloudSamples:ConnectionStringCloudSql;        
             } elseif ($env:Data:MySql:ConnectionString) {
                 # TODO: Stop checking this old environment variable name when we've
                 # updated all the scripts.
                 $connectionString.Node.connectionString = $env:Data:MySql:ConnectionString;        
             }
+        }
+        $connectionString = Select-Xml -Xml $config.Node -XPath "connectionStrings/add[@name='LocalSqlServer']"
+        if ($connectionString) {
+            if ($env:GoogleCloudSamples:ConnectionStringSqlServer) {
+                $connectionString.Node.connectionString = $env:GoogleCloudSamples:ConnectionStringSqlServer;        
+            } 
         }
         $config.Node.OwnerDocument.Save($config.Path);
         $config.Path
@@ -518,7 +524,7 @@ function Run-IISExpress($SiteName, $ApplicationhostConfig) {
 #
 ##############################################################################
 function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '', 
-    $TestJs = 'test.js', [switch]$LeaveRunning = $false) {
+    $TestJs = 'test.js', [switch]$LeaveRunning = $false, [int]$TryCount=3) {
     if (!$SiteName) {
         $SiteName = (get-item -Path ".\").Name
     }
@@ -530,10 +536,16 @@ function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '',
     $webJob = Run-IISExpress $SiteName $ApplicationhostConfig
     Try
     {
-        Start-Sleep -Seconds 4  # Wait for web process to start up.
-        casperjs $TestJs http://localhost:$port
-        if ($LASTEXITCODE) {
-            throw "Casperjs failed with error code $LASTEXITCODE"
+        $try = 0
+        while ($true) {
+            Start-Sleep -Seconds 4  # Wait for web process to start up.
+            casperjs $TestJs http://localhost:$port
+            if (0 -eq $LASTEXITCODE) {
+                break;
+            }
+            if (++$try -eq $TryCount) {
+                throw "Casperjs failed with error code $LASTEXITCODE"
+            }
         }
     }
     Finally
@@ -556,8 +568,16 @@ function Run-IISExpressTest($SiteName = '', $ApplicationhostConfig = '',
 #
 #.PARAMETER DllName
 # The name of the built binary.  Defaults to the current directory name.
+# 
+#.PARAMETER DllDir
+# The directory containing the built binary. Defaults to standard location of 'bin'.
+#
+#.PARAMETER Config
+# The Web.config file to use for the migration. 
+# Defaults to the expected location of the Web.config file.
+#
 ##############################################################################
-function Migrate-Database($DllName = '') {
+function Migrate-Database($DllName = '', $DllDir = 'bin', $Config = '..\Web.config') {
     if (!$DllName) {
         # Default to the name of the current directory + .dll
         # For example, if the current directory is 3-binary-data, then the
@@ -566,11 +586,11 @@ function Migrate-Database($DllName = '') {
     }
     # Migrate.exe cannot be run in place.  It must be copied to the bin directory
     # and run from there.
-    cp (Join-Path (UpFind-File packages) EntityFramework.*\tools\migrate.exe) bin\.
+    cp (Join-Path (UpFind-File packages) EntityFramework.*\tools\migrate.exe) $DllDir\.
     $originalDir = pwd
     Try {
-        cd bin
-        .\migrate.exe $dllName /startupConfigurationFile="..\Web.config"
+        cd $DllDir
+        .\migrate.exe $dllName /startupConfigurationFile="$Config"
         if ($LASTEXITCODE) {
             throw "migrate.exe failed with error code $LASTEXITCODE"
         }
