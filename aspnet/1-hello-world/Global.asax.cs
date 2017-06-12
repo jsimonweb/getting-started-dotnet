@@ -12,6 +12,8 @@
 // License for the specific language governing permissions and limitations under
 // the License.
 
+using Google.Cloud.Diagnostics.AspNet;
+using Google.Cloud.Diagnostics.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +25,13 @@ namespace GoogleCloudSamples
 {
     public class WebApiApplication : System.Web.HttpApplication
     {
+        public override void Init()
+        {
+            base.Init();
+            TraceConfiguration traceConfig = TraceConfiguration.Create(bufferOptions: BufferOptions.NoBuffer());
+            CloudTrace.Initialize(this, "your-project-id", traceConfig);
+        }
+
         protected void Application_Start()
         {
             GlobalConfiguration.Configure(WebApiConfig.Register);

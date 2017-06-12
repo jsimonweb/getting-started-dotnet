@@ -12,6 +12,8 @@
 // License for the specific language governing permissions and limitations under
 // the License.
 
+using Google.Cloud.Diagnostics.AspNet;
+using Google.Cloud.Diagnostics.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,15 +28,17 @@ namespace GoogleCloudSamples
 {
     public static class WebApiConfig
     {
-        // [START sample]
-        /// <summary>
-        /// The simplest possible HTTP Handler that just returns "Hello World."
-        /// </summary>
         public class HelloWorldHandler : HttpMessageHandler
         {
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
                 CancellationToken cancellationToken)
             {
+                using (CloudTrace.Tracer.StartSpan("hello-world-test"))
+                {
+                    // Pause for a second to simulate work being done.
+                    Thread.Sleep(1000);
+                }
+
                 return Task.FromResult(new HttpResponseMessage()
                 {
                     Content = new ByteArrayContent(Encoding.UTF8.GetBytes("Hello World."))
@@ -49,6 +53,5 @@ namespace GoogleCloudSamples
             config.Routes.MapHttpRoute("index", "", emptyDictionary, emptyDictionary,
                 new HelloWorldHandler());
         }
-        // [END sample]
     }
 }
